@@ -124,7 +124,9 @@ async def main():
       " definitions. Your edits must be strictly limited to docstring"
       " blocks.\n4. **Action**: Apply fixes directly to .py files within the"
       " target directory. You are ONLY allowed to edit .py files within the"
-      " target directory. The target directory is: {target_dir}"
+      " target directory. The target directory is: {target_dir}\n5."
+      " **Branding**: Always use 'Google Antigravity SDK' instead of"
+      " 'Antigravity SDK' when referring to the SDK."
   )
 
   print("Creating Docstring Maintenance Agent...")
