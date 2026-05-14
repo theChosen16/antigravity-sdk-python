@@ -15,7 +15,7 @@
 """Bridge between MCP services and the SDK ToolRunner."""
 
 from datetime import timedelta
-from typing import Any, Callable
+from typing import Any, Callable, Union
 from mcp.client import stdio
 from mcp.client.session_group import ClientSessionGroup
 from mcp.client.session_group import SseServerParameters
@@ -60,8 +60,13 @@ class McpBridge:
   """Simplifies the lifecycle of MCP Client Sessions."""
 
   def __init__(self):
-    self.session_group = None
-    self.tools: list[ToolWithSchema] = []
+    self._session_group: ClientSessionGroup | None = None
+    self._tools: list[ToolWithSchema] = []
+
+  @property
+  def tools(self) -> list[ToolWithSchema]:
+    """The MCP tools discovered from connected servers."""
+    return list(self._tools)
 
   async def connect(self, server_cfg: types.McpServerConfig):
     """Connects to an MCP server based on its configuration.
@@ -133,15 +138,25 @@ class McpBridge:
     )
     await self._connect(params)
 
-  async def _connect(self, params):
-    if not self.session_group:
-      self.session_group = ClientSessionGroup()
-      await self.session_group.__aenter__()
-    await self.session_group.connect_to_server(params)
-    self.tools = await get_mcp_tools(self.session_group)
+  async def _connect(
+      self,
+      params: Union[
+          stdio.StdioServerParameters,
+          SseServerParameters,
+          StreamableHttpParameters,
+      ],
+  ) -> None:
+    if not self._session_group:
+      self._session_group = ClientSessionGroup()
+      # Direct __aenter__ call because McpBridge manages the session
+      # lifecycle itself (connect/stop) rather than being used as an
+      # async context manager. __aexit__ is called in stop().
+      await self._session_group.__aenter__()
+    await self._session_group.connect_to_server(params)
+    self._tools = await get_mcp_tools(self._session_group)
 
   async def stop(self):
     """Cleans up all active MCP sessions and releases resources."""
-    if self.session_group:
-      await self.session_group.__aexit__(None, None, None)
-      self.session_group = None
+    if self._session_group:
+      await self._session_group.__aexit__(None, None, None)
+      self._session_group = None
