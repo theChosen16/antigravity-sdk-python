@@ -21,7 +21,7 @@ a trigger are logged but do not crash the session or restart the trigger.
 
 import asyncio
 import logging
-from typing import Self, Sequence
+from typing import Sequence
 
 from google.antigravity.connections import connection as connection_module
 from google.antigravity.triggers import triggers as triggers_module
@@ -88,7 +88,7 @@ class TriggerRunner:
     await asyncio.gather(*self._tasks, return_exceptions=True)
     self._tasks.clear()
 
-  async def __aenter__(self) -> Self:
+  async def __aenter__(self) -> "TriggerRunner":
     """Start triggers on entering the context.
 
     Returns:
